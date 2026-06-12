@@ -102,3 +102,110 @@ impl OpacityAnimator {
         self.current_opacity
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EPSILON: f32 = 1e-6;
+
+    fn approx_eq(a: f32, b: f32) -> bool {
+        (a - b).abs() < EPSILON
+    }
+
+    #[test]
+    fn new_starts_at_given_opacity() {
+        let a = OpacityAnimator::new(0.5);
+        assert!(approx_eq(a.opacity(), 0.5));
+        assert!(approx_eq(a.current_opacity, 0.5));
+    }
+
+    #[test]
+    fn new_starts_idle() {
+        let a = OpacityAnimator::new(0.0);
+        assert_eq!(a.phase, OpacityPhase::Idle);
+        assert!(!a.is_animating());
+    }
+
+    #[test]
+    fn fade_in_sets_phase() {
+        let mut a = OpacityAnimator::new(0.0);
+        a.fade_in(Duration::from_millis(500));
+        assert_eq!(a.phase, OpacityPhase::FadeIn);
+        assert!(a.is_animating());
+    }
+
+    #[test]
+    fn fade_in_sets_target_to_one() {
+        let mut a = OpacityAnimator::new(0.0);
+        a.fade_in(Duration::from_millis(500));
+        assert!(approx_eq(a.target_opacity, 1.0));
+    }
+
+    #[test]
+    fn fade_out_sets_phase() {
+        let mut a = OpacityAnimator::new(1.0);
+        a.fade_out(Duration::from_millis(500), 0.0);
+        assert_eq!(a.phase, OpacityPhase::FadeOut);
+        assert!(a.is_animating());
+    }
+
+    #[test]
+    fn fade_out_sets_target() {
+        let mut a = OpacityAnimator::new(1.0);
+        a.fade_out(Duration::from_millis(500), 0.2);
+        assert!(approx_eq(a.target_opacity, 0.2));
+    }
+
+    #[test]
+    fn pulse_sets_phase() {
+        let mut a = OpacityAnimator::new(0.5);
+        a.pulse(Duration::from_millis(400));
+        assert_eq!(a.phase, OpacityPhase::Pulse);
+        assert!(a.is_animating());
+    }
+
+    #[test]
+    fn is_animating_false_when_idle() {
+        let a = OpacityAnimator::new(1.0);
+        assert!(!a.is_animating());
+    }
+
+    #[test]
+    fn tick_changes_opacity_during_fade_in() {
+        let mut a = OpacityAnimator::new(0.0);
+        a.fade_in(Duration::from_millis(100));
+        a.tick(Duration::from_millis(50));
+        assert!(a.opacity() > 0.0);
+        assert!(a.opacity() < 1.0);
+    }
+
+    #[test]
+    fn tick_completes_fade_in() {
+        let mut a = OpacityAnimator::new(0.0);
+        a.fade_in(Duration::from_millis(100));
+        a.tick(Duration::from_millis(200));
+        assert!(approx_eq(a.opacity(), 1.0));
+        assert_eq!(a.phase, OpacityPhase::Idle);
+        assert!(!a.is_animating());
+    }
+
+    #[test]
+    fn tick_completes_fade_out() {
+        let mut a = OpacityAnimator::new(1.0);
+        a.fade_out(Duration::from_millis(100), 0.0);
+        a.tick(Duration::from_millis(200));
+        assert!(approx_eq(a.opacity(), 0.0));
+        assert_eq!(a.phase, OpacityPhase::Idle);
+        assert!(!a.is_animating());
+    }
+
+    #[test]
+    fn opacity_returns_current_value() {
+        let mut a = OpacityAnimator::new(0.3);
+        assert!(approx_eq(a.opacity(), 0.3));
+        a.fade_in(Duration::from_millis(100));
+        a.tick(Duration::from_millis(100));
+        assert!(approx_eq(a.opacity(), 1.0));
+    }
+}

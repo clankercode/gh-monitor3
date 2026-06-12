@@ -135,7 +135,7 @@ impl GithubClient {
     }
 }
 
-fn extract_next_link(headers: &HeaderMap) -> Option<String> {
+pub(crate) fn extract_next_link(headers: &HeaderMap) -> Option<String> {
     let link_header = headers.get(LINK)?.to_str().ok()?;
     for part in link_header.split(',') {
         let trimmed = part.trim();
@@ -145,4 +145,96 @@ fn extract_next_link(headers: &HeaderMap) -> Option<String> {
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use reqwest::header::{HeaderValue, LINK};
+
+    #[test]
+    fn new_no_token() {
+        let client = GithubClient::new(None).unwrap();
+        assert!(!client.has_token());
+    }
+
+    #[test]
+    fn new_with_token() {
+        let client = GithubClient::new(Some("ghp_test123".to_string())).unwrap();
+        assert!(client.has_token());
+    }
+
+    #[test]
+    fn has_token_false() {
+        let client = GithubClient::new(None).unwrap();
+        assert!(!client.has_token());
+    }
+
+    #[test]
+    fn has_token_true() {
+        let client = GithubClient::new(Some("token".to_string())).unwrap();
+        assert!(client.has_token());
+    }
+
+    #[test]
+    fn extract_next_link_parses_next() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            LINK,
+            HeaderValue::from_static(
+                r#"<https://api.github.com/repos/owner/repo/events?page=2>; rel="next""#,
+            ),
+        );
+        let result = extract_next_link(&headers);
+        assert_eq!(
+            result,
+            Some("https://api.github.com/repos/owner/repo/events?page=2".to_string())
+        );
+    }
+
+    #[test]
+    fn extract_next_link_missing_header() {
+        let headers = HeaderMap::new();
+        assert_eq!(extract_next_link(&headers), None);
+    }
+
+    #[test]
+    fn extract_next_link_no_next_rel() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            LINK,
+            HeaderValue::from_static(
+                r#"<https://api.github.com/repos/owner/repo/events?page=1>; rel="prev""#,
+            ),
+        );
+        assert_eq!(extract_next_link(&headers), None);
+    }
+
+    #[test]
+    fn extract_next_link_multiple_rels() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            LINK,
+            HeaderValue::from_static(
+                r#"<https://api.github.com/repos/owner/repo/events?page=1>; rel="prev", <https://api.github.com/repos/owner/repo/events?page=3>; rel="next""#,
+            ),
+        );
+        let result = extract_next_link(&headers);
+        assert_eq!(
+            result,
+            Some("https://api.github.com/repos/owner/repo/events?page=3".to_string())
+        );
+    }
+
+    #[test]
+    fn extract_next_link_only_last_rel() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            LINK,
+            HeaderValue::from_static(
+                r#"<https://api.github.com/repos/owner/repo/events?page=5>; rel="last""#,
+            ),
+        );
+        assert_eq!(extract_next_link(&headers), None);
+    }
 }
