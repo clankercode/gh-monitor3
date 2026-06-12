@@ -58,9 +58,9 @@ impl Theme {
 
     pub fn badge_color_for_event_type(&self, event_type: &EventType) -> [f32; 4] {
         match event_type {
-            EventType::PullRequest | EventType::PullRequestReview | EventType::PullRequestReviewComment => {
-                self.badge_pr
-            }
+            EventType::PullRequest
+            | EventType::PullRequestReview
+            | EventType::PullRequestReviewComment => self.badge_pr,
             EventType::Issues | EventType::IssueComment => self.badge_issue,
             EventType::Push | EventType::CommitComment => self.badge_push,
             EventType::Release => self.badge_release,

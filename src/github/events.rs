@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-use octocrab::models::events::payload::EventPayload;
 use octocrab::models::events::Event;
+use octocrab::models::events::payload::EventPayload;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -333,10 +333,7 @@ mod tests {
         assert_eq!(EventType::Fork, EventType::Fork);
         assert_eq!(EventType::Watch, EventType::Watch);
         assert_eq!(EventType::IssueComment, EventType::IssueComment);
-        assert_eq!(
-            EventType::PullRequestReview,
-            EventType::PullRequestReview
-        );
+        assert_eq!(EventType::PullRequestReview, EventType::PullRequestReview);
         assert_eq!(
             EventType::PullRequestReviewComment,
             EventType::PullRequestReviewComment
@@ -357,7 +354,10 @@ mod tests {
         assert_ne!(EventType::Push, EventType::PullRequest);
         assert_ne!(EventType::Issues, EventType::Create);
         assert_ne!(EventType::Watch, EventType::Fork);
-        assert_ne!(EventType::Other("a".to_string()), EventType::Other("b".to_string()));
+        assert_ne!(
+            EventType::Other("a".to_string()),
+            EventType::Other("b".to_string())
+        );
     }
 
     #[test]

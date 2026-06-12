@@ -88,12 +88,18 @@ mod tests {
 
     #[test]
     fn test_humanize_duration_8_hours() {
-        assert_eq!(humanize_duration(Duration::from_secs(28800)), "6-12 hrs ago");
+        assert_eq!(
+            humanize_duration(Duration::from_secs(28800)),
+            "6-12 hrs ago"
+        );
     }
 
     #[test]
     fn test_humanize_duration_18_hours() {
-        assert_eq!(humanize_duration(Duration::from_secs(64800)), "12-24 hrs ago");
+        assert_eq!(
+            humanize_duration(Duration::from_secs(64800)),
+            "12-24 hrs ago"
+        );
     }
 
     #[test]
@@ -103,32 +109,50 @@ mod tests {
 
     #[test]
     fn test_humanize_duration_2_days() {
-        assert_eq!(humanize_duration(Duration::from_secs(172800)), "2-3 days ago");
+        assert_eq!(
+            humanize_duration(Duration::from_secs(172800)),
+            "2-3 days ago"
+        );
     }
 
     #[test]
     fn test_humanize_duration_5_days() {
-        assert_eq!(humanize_duration(Duration::from_secs(432000)), "3-7 days ago");
+        assert_eq!(
+            humanize_duration(Duration::from_secs(432000)),
+            "3-7 days ago"
+        );
     }
 
     #[test]
     fn test_humanize_duration_1_week() {
-        assert_eq!(humanize_duration(Duration::from_secs(604800)), "1-2 weeks ago");
+        assert_eq!(
+            humanize_duration(Duration::from_secs(604800)),
+            "1-2 weeks ago"
+        );
     }
 
     #[test]
     fn test_humanize_duration_2_weeks() {
-        assert_eq!(humanize_duration(Duration::from_secs(1209600)), "2-4 weeks ago");
+        assert_eq!(
+            humanize_duration(Duration::from_secs(1209600)),
+            "2-4 weeks ago"
+        );
     }
 
     #[test]
     fn test_humanize_duration_3_weeks() {
-        assert_eq!(humanize_duration(Duration::from_secs(1814400)), "2-4 weeks ago");
+        assert_eq!(
+            humanize_duration(Duration::from_secs(1814400)),
+            "2-4 weeks ago"
+        );
     }
 
     #[test]
     fn test_humanize_duration_5_weeks() {
-        assert_eq!(humanize_duration(Duration::from_secs(3024000)), "1+ months ago");
+        assert_eq!(
+            humanize_duration(Duration::from_secs(3024000)),
+            "1+ months ago"
+        );
     }
 
     #[test]

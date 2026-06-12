@@ -1,3 +1,3 @@
-pub mod tween;
-pub mod opacity;
 pub mod manager;
+pub mod opacity;
+pub mod tween;

@@ -5,7 +5,7 @@ pub fn set_click_through(window: &Window, click_through: bool) {
 }
 
 pub fn set_always_on_top(window: &Window, always_on_top: bool) {
-    let _ = window.set_window_level(if always_on_top {
+    window.set_window_level(if always_on_top {
         winit::window::WindowLevel::AlwaysOnTop
     } else {
         winit::window::WindowLevel::Normal

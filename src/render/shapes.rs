@@ -119,17 +119,39 @@ impl ShapeRenderer {
         self.indices.clear();
     }
 
-    pub fn push_rect(&mut self, x: f32, y: f32, w: f32, h: f32, color: [f32; 4], screen_w: f32, screen_h: f32) {
+    pub fn push_rect(
+        &mut self,
+        x: f32,
+        y: f32,
+        w: f32,
+        h: f32,
+        color: [f32; 4],
+        screen_w: f32,
+        screen_h: f32,
+    ) {
         let (x0, y0) = Self::screen_to_clip(x, y, screen_w, screen_h);
         let (x1, y1) = Self::screen_to_clip(x + w, y + h, screen_w, screen_h);
 
         let base = self.vertices.len() as u32;
-        self.vertices.push(Vertex { position: [x0, y0], color });
-        self.vertices.push(Vertex { position: [x1, y0], color });
-        self.vertices.push(Vertex { position: [x1, y1], color });
-        self.vertices.push(Vertex { position: [x0, y1], color });
+        self.vertices.push(Vertex {
+            position: [x0, y0],
+            color,
+        });
+        self.vertices.push(Vertex {
+            position: [x1, y0],
+            color,
+        });
+        self.vertices.push(Vertex {
+            position: [x1, y1],
+            color,
+        });
+        self.vertices.push(Vertex {
+            position: [x0, y1],
+            color,
+        });
 
-        self.indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+        self.indices
+            .extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
     }
 
     pub fn push_rounded_rect(
@@ -159,7 +181,10 @@ impl ShapeRenderer {
             let (cx, cy) = Self::screen_to_clip(cx_px, cy_px, screen_w, screen_h);
             let start_angle = std::f32::consts::FRAC_PI_2 * i as f32;
 
-            self.vertices.push(Vertex { position: [cx, cy], color });
+            self.vertices.push(Vertex {
+                position: [cx, cy],
+                color,
+            });
 
             for s in 0..=segments {
                 let angle = start_angle + angle_step * s as f32;
@@ -175,7 +200,10 @@ impl ShapeRenderer {
                 };
 
                 let (px, py) = Self::screen_to_clip(mirrored_x, mirrored_y, screen_w, screen_h);
-                self.vertices.push(Vertex { position: [px, py], color });
+                self.vertices.push(Vertex {
+                    position: [px, py],
+                    color,
+                });
             }
         }
 
@@ -183,7 +211,8 @@ impl ShapeRenderer {
             let center = base + i * (segments + 2);
             let first_outer = center + 1;
             for s in 0..segments {
-                self.indices.extend_from_slice(&[center, first_outer + s, first_outer + s + 1]);
+                self.indices
+                    .extend_from_slice(&[center, first_outer + s, first_outer + s + 1]);
             }
         }
 
@@ -207,7 +236,10 @@ impl ShapeRenderer {
 
         for &(px, py) in &strip_points {
             let (cx, cy) = Self::screen_to_clip(px, py, screen_w, screen_h);
-            self.vertices.push(Vertex { position: [cx, cy], color });
+            self.vertices.push(Vertex {
+                position: [cx, cy],
+                color,
+            });
         }
 
         let tl = strip_base;
@@ -220,12 +252,7 @@ impl ShapeRenderer {
         let br = strip_base + 7;
 
         self.indices.extend_from_slice(&[
-            tl, tr, rt,
-            tl, rt, lt,
-            lt, rt, rb,
-            lt, rb, lb,
-            lb, rb, br,
-            lb, br, bl,
+            tl, tr, rt, tl, rt, lt, lt, rt, rb, lt, rb, lb, lb, rb, br, lb, br, bl,
         ]);
     }
 
@@ -237,17 +264,21 @@ impl ShapeRenderer {
             return;
         }
 
-        self.vertex_buffer = Some(device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("shape_vertices"),
-            contents: bytemuck::cast_slice(&self.vertices),
-            usage: wgpu::BufferUsages::VERTEX,
-        }));
+        self.vertex_buffer = Some(
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("shape_vertices"),
+                contents: bytemuck::cast_slice(&self.vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            }),
+        );
 
-        self.index_buffer = Some(device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("shape_indices"),
-            contents: bytemuck::cast_slice(&self.indices),
-            usage: wgpu::BufferUsages::INDEX,
-        }));
+        self.index_buffer = Some(
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("shape_indices"),
+                contents: bytemuck::cast_slice(&self.indices),
+                usage: wgpu::BufferUsages::INDEX,
+            }),
+        );
 
         self.index_count = self.indices.len() as u32;
     }

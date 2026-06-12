@@ -90,8 +90,7 @@ impl RenderPipeline {
                 anyhow::bail!("surface timeout/occluded");
             }
             wgpu::CurrentSurfaceTexture::Outdated | wgpu::CurrentSurfaceTexture::Lost => {
-                self.surface
-                    .configure(&self.device, &self.surface_config);
+                self.surface.configure(&self.device, &self.surface_config);
                 match self.surface.get_current_texture() {
                     wgpu::CurrentSurfaceTexture::Success(t)
                     | wgpu::CurrentSurfaceTexture::Suboptimal(t) => t,

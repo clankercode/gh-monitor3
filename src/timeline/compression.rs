@@ -60,7 +60,7 @@ pub fn compress_timeline(groups: Vec<TimelineGroup>) -> Vec<TimelineEntry> {
             continue;
         }
 
-        let can_merge = buffer.last().map_or(true, |prev| {
+        let can_merge = buffer.last().is_none_or(|prev| {
             if prev.repo_name != group.repo_name {
                 false
             } else {
@@ -79,6 +79,7 @@ pub fn compress_timeline(groups: Vec<TimelineGroup>) -> Vec<TimelineEntry> {
     }
 
     flush_buffer(&mut buffer, &mut entries);
+    entries.reverse();
     entries
 }
 
@@ -89,7 +90,13 @@ mod tests {
     use crate::timeline::grouping::TimelineGroup;
     use chrono::Utc;
 
-    fn make_non_rare_group(repo: &str, event_type: EventType, count: u32, earliest: chrono::DateTime<Utc>, latest: chrono::DateTime<Utc>) -> TimelineGroup {
+    fn make_non_rare_group(
+        repo: &str,
+        event_type: EventType,
+        count: u32,
+        earliest: chrono::DateTime<Utc>,
+        latest: chrono::DateTime<Utc>,
+    ) -> TimelineGroup {
         TimelineGroup {
             repo_name: repo.to_string(),
             event_type,
@@ -101,7 +108,11 @@ mod tests {
         }
     }
 
-    fn make_rare_group(repo: &str, event_type: EventType, created_at: chrono::DateTime<Utc>) -> TimelineGroup {
+    fn make_rare_group(
+        repo: &str,
+        event_type: EventType,
+        created_at: chrono::DateTime<Utc>,
+    ) -> TimelineGroup {
         TimelineGroup {
             repo_name: repo.to_string(),
             event_type,
@@ -153,8 +164,20 @@ mod tests {
     fn test_non_rare_groups_same_repo_within_6_hours_compressed() {
         let now = Utc::now();
         let groups = vec![
-            make_non_rare_group("owner/repo", EventType::Push, 3, now - chrono::Duration::hours(2), now - chrono::Duration::hours(2)),
-            make_non_rare_group("owner/repo", EventType::PullRequest, 2, now - chrono::Duration::hours(1), now - chrono::Duration::hours(1)),
+            make_non_rare_group(
+                "owner/repo",
+                EventType::Push,
+                3,
+                now - chrono::Duration::hours(2),
+                now - chrono::Duration::hours(2),
+            ),
+            make_non_rare_group(
+                "owner/repo",
+                EventType::PullRequest,
+                2,
+                now - chrono::Duration::hours(1),
+                now - chrono::Duration::hours(1),
+            ),
         ];
         let entries = compress_timeline(groups);
         assert_eq!(entries.len(), 1);
@@ -172,8 +195,20 @@ mod tests {
     fn test_groups_from_different_repos_stay_separate() {
         let now = Utc::now();
         let groups = vec![
-            make_non_rare_group("owner/repo-a", EventType::Push, 2, now - chrono::Duration::hours(1), now),
-            make_non_rare_group("owner/repo-b", EventType::Push, 3, now - chrono::Duration::hours(1), now),
+            make_non_rare_group(
+                "owner/repo-a",
+                EventType::Push,
+                2,
+                now - chrono::Duration::hours(1),
+                now,
+            ),
+            make_non_rare_group(
+                "owner/repo-b",
+                EventType::Push,
+                3,
+                now - chrono::Duration::hours(1),
+                now,
+            ),
         ];
         let entries = compress_timeline(groups);
         assert_eq!(entries.len(), 2);
@@ -191,19 +226,40 @@ mod tests {
     fn test_rare_group_flushes_buffer_before_adding() {
         let now = Utc::now();
         let groups = vec![
-            make_non_rare_group("owner/repo", EventType::Push, 2, now - chrono::Duration::hours(5), now - chrono::Duration::hours(5)),
-            make_non_rare_group("owner/repo", EventType::PullRequest, 1, now - chrono::Duration::hours(4), now - chrono::Duration::hours(4)),
-            make_rare_group("owner/repo", EventType::Release, now - chrono::Duration::hours(3)),
-            make_non_rare_group("owner/repo", EventType::Issues, 1, now - chrono::Duration::hours(2), now - chrono::Duration::hours(2)),
+            make_non_rare_group(
+                "owner/repo",
+                EventType::Push,
+                2,
+                now - chrono::Duration::hours(5),
+                now - chrono::Duration::hours(5),
+            ),
+            make_non_rare_group(
+                "owner/repo",
+                EventType::PullRequest,
+                1,
+                now - chrono::Duration::hours(4),
+                now - chrono::Duration::hours(4),
+            ),
+            make_rare_group(
+                "owner/repo",
+                EventType::Release,
+                now - chrono::Duration::hours(3),
+            ),
+            make_non_rare_group(
+                "owner/repo",
+                EventType::Issues,
+                1,
+                now - chrono::Duration::hours(2),
+                now - chrono::Duration::hours(2),
+            ),
         ];
         let entries = compress_timeline(groups);
         assert_eq!(entries.len(), 3);
         match &entries[0] {
-            TimelineEntry::Single(g) => {
-                assert!(!g.is_rare);
-                assert_eq!(g.event_type, EventType::Issues);
+            TimelineEntry::Compressed(c) => {
+                assert_eq!(c.count, 3);
             }
-            _ => panic!("Expected Single non-rare entry"),
+            _ => panic!("Expected Compressed entry"),
         }
         match &entries[1] {
             TimelineEntry::Single(g) => {
@@ -213,10 +269,11 @@ mod tests {
             _ => panic!("Expected Single rare entry"),
         }
         match &entries[2] {
-            TimelineEntry::Compressed(c) => {
-                assert_eq!(c.count, 3);
+            TimelineEntry::Single(g) => {
+                assert!(!g.is_rare);
+                assert_eq!(g.event_type, EventType::Issues);
             }
-            _ => panic!("Expected Compressed entry"),
+            _ => panic!("Expected Single non-rare entry"),
         }
     }
 
@@ -224,7 +281,13 @@ mod tests {
     fn test_compressed_entry_has_correct_time_range() {
         let now = Utc::now();
         let groups = vec![
-            make_non_rare_group("owner/repo", EventType::Push, 1, now - chrono::Duration::minutes(5), now - chrono::Duration::minutes(5)),
+            make_non_rare_group(
+                "owner/repo",
+                EventType::Push,
+                1,
+                now - chrono::Duration::minutes(5),
+                now - chrono::Duration::minutes(5),
+            ),
             make_non_rare_group("owner/repo", EventType::Issues, 1, now, now),
         ];
         let entries = compress_timeline(groups);

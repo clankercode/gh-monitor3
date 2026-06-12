@@ -20,6 +20,7 @@ struct RenderItem {
     repo_name: String,
     badges: Vec<(EventType, u32, [f32; 4])>,
     time_text: String,
+    url: String,
 }
 
 pub struct TimelineView {
@@ -28,6 +29,7 @@ pub struct TimelineView {
     theme: Theme,
     scroll_offset: f32,
     content_height: f32,
+    rendered_items: Vec<RenderItem>,
 }
 
 impl TimelineView {
@@ -46,6 +48,7 @@ impl TimelineView {
             theme,
             scroll_offset: 0.0,
             content_height: 0.0,
+            rendered_items: Vec::new(),
         }
     }
 
@@ -107,9 +110,10 @@ impl TimelineView {
                 x: self.theme.padding,
                 y,
                 width: card_width,
-                repo_name,
+                repo_name: repo_name.clone(),
                 badges,
                 time_text,
+                url: format!("https://github.com/{}", repo_name),
             });
 
             y += CARD_HEIGHT + card_margin;
@@ -128,35 +132,42 @@ impl TimelineView {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         entries: &[TimelineEntry],
-        _opacity: f32,
+        opacity: f32,
         width: f32,
         height: f32,
     ) {
         let items = self.layout(entries, width, height);
+        self.rendered_items = items;
 
         self.shape_renderer.begin_frame();
 
         let mut text_segments = Vec::new();
 
-        for item in &items {
+        for item in &self.rendered_items {
+            let mut card_bg = self.theme.bg_color;
+            card_bg[3] *= opacity;
+
             self.shape_renderer.push_rounded_rect(
                 item.x,
                 item.y,
                 item.width,
                 CARD_HEIGHT,
                 CARD_CORNER_RADIUS,
-                self.theme.bg_color,
+                card_bg,
                 8,
                 width,
                 height,
             );
+
+            let mut text_color = self.theme.text_color;
+            text_color[3] *= opacity;
 
             text_segments.push(TextSegment {
                 text: item.repo_name.clone(),
                 x: item.x + CARD_PADDING,
                 y: item.y + CARD_PADDING,
                 font_size: self.theme.font_size,
-                color: self.theme.text_color,
+                color: text_color,
                 max_width: Some(item.width - CARD_PADDING * 2.0),
             });
 
@@ -168,29 +179,38 @@ impl TimelineView {
                 let label_width =
                     label.len() as f32 * (self.theme.font_size * 0.55) + BADGE_PADDING_H * 2.0;
 
+                let mut badge_color = *color;
+                badge_color[3] *= opacity;
+
                 self.shape_renderer.push_rounded_rect(
                     badge_x,
                     badge_y,
                     label_width,
                     BADGE_HEIGHT,
                     BADGE_CORNER_RADIUS,
-                    *color,
+                    badge_color,
                     4,
                     width,
                     height,
                 );
+
+                let mut badge_text_color = [1.0, 1.0, 1.0, 1.0];
+                badge_text_color[3] *= opacity;
 
                 text_segments.push(TextSegment {
                     text: label,
                     x: badge_x + BADGE_PADDING_H,
                     y: badge_y + 2.0,
                     font_size: self.theme.font_size * 0.8,
-                    color: [1.0, 1.0, 1.0, 1.0],
+                    color: badge_text_color,
                     max_width: Some(label_width),
                 });
 
                 badge_x += label_width + BADGE_GAP;
             }
+
+            let mut time_color = [0.7, 0.7, 0.75, 1.0];
+            time_color[3] *= opacity;
 
             text_segments.push(TextSegment {
                 text: item.time_text.clone(),
@@ -199,7 +219,7 @@ impl TimelineView {
                     - item.time_text.len() as f32 * (self.theme.font_size * 0.4),
                 y: item.y + CARD_PADDING,
                 font_size: self.theme.font_size * 0.85,
-                color: [0.7, 0.7, 0.75, 1.0],
+                color: time_color,
                 max_width: Some(item.width * 0.4),
             });
         }
@@ -220,5 +240,14 @@ impl TimelineView {
         if self.scroll_offset > 0.0 {
             self.scroll_offset = 0.0;
         }
+    }
+
+    pub fn hit_test(&self, x: f32, y: f32) -> Option<String> {
+        for item in &self.rendered_items {
+            if x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + CARD_HEIGHT {
+                return Some(item.url.clone());
+            }
+        }
+        None
     }
 }

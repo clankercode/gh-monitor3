@@ -22,8 +22,7 @@ pub struct Poller {
 impl Poller {
     pub fn new(config: &Config, event_tx: mpsc::Sender<Vec<GitHubEvent>>) -> Self {
         let client = Arc::new(
-            GithubClient::new(config.github_token.clone())
-                .expect("Failed to create GitHub client"),
+            GithubClient::new(config.github_token.clone()).expect("Failed to create GitHub client"),
         );
 
         let repos: Vec<(String, String)> = config
@@ -69,12 +68,7 @@ impl Poller {
                         .collect();
 
                     if !new_events.is_empty() {
-                        info!(
-                            "Repo {}/{}: {} new events",
-                            owner,
-                            repo,
-                            new_events.len()
-                        );
+                        info!("Repo {}/{}: {} new events", owner, repo, new_events.len());
                         if self.event_tx.send(new_events).await.is_err() {
                             warn!("Event receiver dropped, stopping poller");
                             return;

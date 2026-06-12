@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use anyhow::Result;
-use reqwest::header::{HeaderMap, HeaderValue, ETAG, IF_NONE_MATCH, LINK};
 use reqwest::StatusCode;
+use reqwest::header::{ETAG, HeaderMap, HeaderValue, IF_NONE_MATCH, LINK};
 use tokio::sync::Mutex;
 use tracing::{debug, warn};
 
@@ -103,6 +103,11 @@ impl GithubClient {
 
         if resp.status() == StatusCode::NOT_MODIFIED {
             debug!("ETag cache hit for {url}");
+            return Ok((Vec::new(), None, None));
+        }
+
+        if !resp.status().is_success() {
+            warn!("GitHub API error for {url}: {}", resp.status());
             return Ok((Vec::new(), None, None));
         }
 

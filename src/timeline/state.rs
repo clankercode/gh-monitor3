@@ -1,8 +1,8 @@
+use super::compression::{TimelineEntry, compress_timeline};
+use super::grouping::group_events;
+use crate::github::events::GitHubEvent;
 use std::collections::{HashSet, VecDeque};
 use std::time::Instant;
-use super::grouping::group_events;
-use super::compression::{compress_timeline, TimelineEntry};
-use crate::github::events::GitHubEvent;
 
 const MAX_EVENTS: usize = 500;
 

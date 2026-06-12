@@ -17,7 +17,7 @@ impl Default for OverlayConfig {
 }
 
 pub fn apply_overlay_settings(window: &Window, config: &OverlayConfig) {
-    let _ = window.set_transparent(true);
+    window.set_transparent(true);
     super::platform::set_click_through(window, config.click_through);
     super::platform::set_always_on_top(window, true);
 }

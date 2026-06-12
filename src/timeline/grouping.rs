@@ -1,6 +1,6 @@
+use crate::github::events::{EventPayloadType, EventType, GitHubEvent};
 use chrono::{DateTime, Utc};
 use std::time::Duration;
-use crate::github::events::{EventType, GitHubEvent, EventPayloadType};
 
 const TIME_WINDOW: Duration = Duration::from_secs(3 * 3600);
 
@@ -54,7 +54,7 @@ pub fn group_events(events: &[GitHubEvent]) -> Vec<TimelineGroup> {
 
     for event in non_rare {
         let bucket = non_rare_groups.last_mut();
-        let matches_bucket = bucket.map_or(false, |g: &mut TimelineGroup| {
+        let matches_bucket = bucket.is_some_and(|g: &mut TimelineGroup| {
             g.repo_name == event.repo_name
                 && g.event_type == event.event_type
                 && event.created_at.signed_duration_since(g.earliest)

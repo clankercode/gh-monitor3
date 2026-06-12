@@ -300,7 +300,10 @@ other = [0.5, 0.5, 0.5, 1.0]
         assert_eq!(loaded.window.x, Some(100));
         assert_eq!(loaded.window.y, Some(200));
         assert_eq!(loaded.theme.font_size, 18.0);
-        assert_eq!(loaded.theme.font_path, Some("/usr/share/fonts/test.ttf".to_string()));
+        assert_eq!(
+            loaded.theme.font_path,
+            Some("/usr/share/fonts/test.ttf".to_string())
+        );
 
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -315,7 +318,10 @@ other = [0.5, 0.5, 0.5, 1.0]
 
     #[test]
     fn test_save_creates_parent_directories() {
-        let dir = std::env::temp_dir().join("gh-monitor3-test-nested").join("sub").join("dir");
+        let dir = std::env::temp_dir()
+            .join("gh-monitor3-test-nested")
+            .join("sub")
+            .join("dir");
         let _ = std::fs::remove_dir_all(std::env::temp_dir().join("gh-monitor3-test-nested"));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("config.toml");

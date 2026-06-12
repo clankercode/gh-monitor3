@@ -130,9 +130,24 @@ impl App {
     fn process_github_events(&mut self) {
         while let Ok(events) = self.event_rx.try_recv() {
             for event in events {
-                debug!("New event: {} from {}", event.event_type_label(), event.actor);
+                debug!(
+                    "New event: {} from {}",
+                    event.event_type_label(),
+                    event.actor
+                );
                 self.timeline_state.update(vec![event]);
                 self.needs_render_prepare = true;
+            }
+        }
+
+        while let Some(anim_event) = self.timeline_state.pop_animation() {
+            match anim_event {
+                crate::timeline::state::AnimationEvent::NewEntry(_) => {
+                    self.animation_manager.add_fade_in(FADE_DURATION);
+                }
+                crate::timeline::state::AnimationEvent::UpdatedEntry(_) => {
+                    self.animation_manager.add_pulse(PULSE_DURATION);
+                }
             }
         }
     }
@@ -196,8 +211,8 @@ impl ApplicationHandler for App {
 
             WindowEvent::CursorMoved { position, .. } => {
                 self.last_cursor_pos = (position.x, position.y);
-                if self.is_dragging {
-                    if let Some(start) = self.drag_start_pos {
+                if self.is_dragging
+                    && let Some(start) = self.drag_start_pos {
                         let dx = (position.x - start.0) as i32;
                         let dy = (position.y - start.1) as i32;
                         if let Some(ref mut pos) = self.window_pos {
@@ -209,7 +224,6 @@ impl ApplicationHandler for App {
                         }
                         self.drag_start_pos = Some((position.x, position.y));
                     }
-                }
 
                 if let Some(ref window) = self.window {
                     window.request_redraw();
@@ -224,7 +238,20 @@ impl ApplicationHandler for App {
                             self.drag_start_pos = Some(self.last_cursor_pos);
                         }
                         ElementState::Released => {
+                            let start = self.drag_start_pos;
                             self.is_dragging = false;
+                            if let Some(start_pos) = start {
+                                let dx = self.last_cursor_pos.0 - start_pos.0;
+                                let dy = self.last_cursor_pos.1 - start_pos.1;
+                                if dx.abs() < 5.0 && dy.abs() < 5.0
+                                    && let Some(ref view) = self.timeline_view
+                                        && let Some(url) = view.hit_test(
+                                            self.last_cursor_pos.0 as f32,
+                                            self.last_cursor_pos.1 as f32,
+                                        ) {
+                                            let _ = open::that(url);
+                                        }
+                            }
                             self.drag_start_pos = None;
                         }
                     }
@@ -250,8 +277,8 @@ impl ApplicationHandler for App {
 
                 self.animation_manager.tick(dt);
 
-                if self.needs_render_prepare {
-                    if let (Some(pipeline), Some(view)) =
+                if self.needs_render_prepare
+                    && let (Some(pipeline), Some(view)) =
                         (&mut self.render_pipeline, &mut self.timeline_view)
                     {
                         let size = self.window.as_ref().map(|w| w.inner_size()).unwrap();
@@ -265,7 +292,6 @@ impl ApplicationHandler for App {
                         );
                         self.needs_render_prepare = false;
                     }
-                }
 
                 if let (Some(pipeline), Some(view)) =
                     (&mut self.render_pipeline, &mut self.timeline_view)

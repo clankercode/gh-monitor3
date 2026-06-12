@@ -28,12 +28,8 @@ impl TextRenderer {
         let swash_cache = SwashCache::new();
         let cache = Cache::new(device);
         let mut atlas = TextAtlas::new(device, queue, &cache, format);
-        let text_renderer = GlyphonRenderer::new(
-            &mut atlas,
-            device,
-            wgpu::MultisampleState::default(),
-            None,
-        );
+        let text_renderer =
+            GlyphonRenderer::new(&mut atlas, device, wgpu::MultisampleState::default(), None);
         let viewport = Viewport::new(device, &cache);
 
         Self {
@@ -57,13 +53,8 @@ impl TextRenderer {
     ) {
         self.buffers.clear();
 
-        self.viewport.update(
-            queue,
-            glyphon::Resolution {
-                width,
-                height,
-            },
-        );
+        self.viewport
+            .update(queue, glyphon::Resolution { width, height });
 
         for segment in texts {
             let mut buffer = Buffer::new(
