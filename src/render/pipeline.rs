@@ -50,8 +50,13 @@ impl RenderPipeline {
             .contains(&CompositeAlphaMode::PostMultiplied)
         {
             CompositeAlphaMode::PostMultiplied
+        } else if surface_caps
+            .alpha_modes
+            .contains(&CompositeAlphaMode::PreMultiplied)
+        {
+            CompositeAlphaMode::PreMultiplied
         } else {
-            CompositeAlphaMode::Inherit
+            CompositeAlphaMode::Opaque
         };
 
         let surface_config = wgpu::SurfaceConfiguration {
