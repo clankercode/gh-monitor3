@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            artifact: gh-monitor3-linux-x86_64
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            artifact: gh-monitor3-macos-x86_64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            artifact: gh-monitor3-macos-aarch64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            artifact: gh-monitor3-windows-x86_64.exe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libwayland-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libvulkan-dev
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Rename binary (Unix)
+        if: runner.os != 'Windows'
+        run: cp target/${{ matrix.target }}/release/gh-monitor3 ${{ matrix.artifact }}
+      - name: Rename binary (Windows)
+        if: runner.os == 'Windows'
+        run: cp target/${{ matrix.target }}/release/gh-monitor3.exe ${{ matrix.artifact }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          cp artifacts/gh-monitor3-linux-x86_64/gh-monitor3-linux-x86_64 release/
+          cp artifacts/gh-monitor3-macos-x86_64/gh-monitor3-macos-x86_64 release/
+          cp artifacts/gh-monitor3-macos-aarch64/gh-monitor3-macos-aarch64 release/
+          cp artifacts/gh-monitor3-windows-x86_64.exe/gh-monitor3-windows-x86_64.exe release/
+      - name: Generate checksums
+        run: |
+          cd release
+          sha256sum * > checksums-sha256.txt
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release/gh-monitor3-linux-x86_64
+            release/gh-monitor3-macos-x86_64
+            release/gh-monitor3-macos-aarch64
+            release/gh-monitor3-windows-x86_64.exe
+            release/checksums-sha256.txt
