@@ -50,10 +50,12 @@ pub struct BadgeColors {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            github_token: std::env::var("GITHUB_TOKEN").ok(),
+            github_token: std::env::var("GITHUB_TOKEN")
+                .ok()
+                .or_else(crate::github::client::GithubClient::get_gh_cli_token),
             repos: Vec::new(),
             orgs: Vec::new(),
-            poll_interval_secs: 60,
+            poll_interval_secs: 600,
             window: WindowConfig::default(),
             theme: ThemeConfig::default(),
         }
@@ -149,7 +151,7 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = Config::default();
-        assert_eq!(config.poll_interval_secs, 60);
+        assert_eq!(config.poll_interval_secs, 600);
         assert_eq!(config.window.width, 320);
         assert_eq!(config.window.height, 480);
     }
@@ -204,7 +206,9 @@ mod tests {
     #[test]
     fn test_default_config_token_from_env() {
         let config = Config::default();
-        let expected = std::env::var("GITHUB_TOKEN").ok();
+        let expected = std::env::var("GITHUB_TOKEN")
+            .ok()
+            .or_else(crate::github::client::GithubClient::get_gh_cli_token);
         assert_eq!(config.github_token, expected);
     }
 
@@ -311,7 +315,7 @@ other = [0.5, 0.5, 0.5, 1.0]
     #[test]
     fn test_missing_config_file_returns_default() {
         let config = Config::load(Some("/tmp/nonexistent-gh-monitor3-config-xyz.toml")).unwrap();
-        assert_eq!(config.poll_interval_secs, 60);
+        assert_eq!(config.poll_interval_secs, 600);
         assert_eq!(config.window.width, 320);
         assert!(config.repos.is_empty());
     }
@@ -331,7 +335,7 @@ other = [0.5, 0.5, 0.5, 1.0]
 
         assert!(path.exists());
         let loaded = Config::load(Some(path.to_str().unwrap())).unwrap();
-        assert_eq!(loaded.poll_interval_secs, 60);
+        assert_eq!(loaded.poll_interval_secs, 600);
 
         let _ = std::fs::remove_dir_all(std::env::temp_dir().join("gh-monitor3-test-nested"));
     }

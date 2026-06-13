@@ -9,10 +9,13 @@ use tracing_subscriber::EnvFilter;
 mod animation;
 mod app;
 mod config;
+mod demo;
 mod error;
 mod github;
+mod notifications;
 mod render;
 mod timeline;
+mod ui;
 mod window;
 
 #[derive(Parser)]
@@ -45,6 +48,9 @@ fn main() -> anyhow::Result<()> {
     }
 
     let mut config = config::Config::load(cli.config.as_deref())?;
+    if config.github_token.is_none() {
+        config.github_token = crate::github::client::GithubClient::get_gh_cli_token();
+    }
     if let Some(token) = cli.token {
         config.github_token = Some(token);
     }

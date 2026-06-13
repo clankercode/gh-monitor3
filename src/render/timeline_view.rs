@@ -4,6 +4,8 @@ use super::theme::Theme;
 use crate::github::events::EventType;
 use crate::timeline::compression::TimelineEntry;
 use crate::timeline::grouping::TimelineGroup;
+use crate::ui::context_menu::ContextMenu;
+use crate::ui::settings_panel::SettingsPanel;
 
 const CARD_HEIGHT: f32 = 72.0;
 const CARD_PADDING: f32 = 10.0;
@@ -135,6 +137,8 @@ impl TimelineView {
         opacity: f32,
         width: f32,
         height: f32,
+        context_menu: &ContextMenu,
+        settings_panel: &SettingsPanel,
     ) {
         let items = self.layout(entries, width, height);
         self.rendered_items = items;
@@ -223,6 +227,22 @@ impl TimelineView {
                 max_width: Some(item.width * 0.4),
             });
         }
+
+        context_menu.render(
+            &mut self.shape_renderer,
+            &mut text_segments,
+            opacity,
+            width,
+            height,
+        );
+
+        settings_panel.render(
+            &mut self.shape_renderer,
+            &mut text_segments,
+            opacity,
+            width,
+            height,
+        );
 
         self.shape_renderer.upload(device);
 

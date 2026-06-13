@@ -50,8 +50,33 @@ impl GithubClient {
         })
     }
 
+    pub fn get_gh_cli_token() -> Option<String> {
+        std::process::Command::new("gh")
+            .args(["auth", "token"])
+            .output()
+            .ok()
+            .and_then(|output| {
+                if output.status.success() {
+                    String::from_utf8(output.stdout)
+                        .ok()
+                        .map(|s| s.trim().to_string())
+                } else {
+                    None
+                }
+            })
+    }
+
     pub fn has_token(&self) -> bool {
         self.token.is_some()
+    }
+
+    pub async fn whoami(&self) -> Result<String> {
+        let resp = self.http.get("https://api.github.com/user").send().await?;
+        if !resp.status().is_success() {
+            anyhow::bail!("whoami failed: {}", resp.status());
+        }
+        let user: serde_json::Value = resp.json().await?;
+        Ok(user["login"].as_str().unwrap_or("unknown").to_string())
     }
 
     pub async fn list_repo_events(&self, owner: &str, repo: &str) -> Result<Vec<GitHubEvent>> {

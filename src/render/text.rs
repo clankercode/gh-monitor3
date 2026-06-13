@@ -24,7 +24,24 @@ pub struct TextRenderer {
 
 impl TextRenderer {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, format: wgpu::TextureFormat) -> Self {
-        let font_system = FontSystem::new();
+        let mut font_system = FontSystem::new();
+
+        let emoji_paths = [
+            "/usr/share/fonts/noto/NotoColorEmoji.ttf",
+            "/usr/share/fonts/google-noto-emoji/NotoColorEmoji.ttf",
+            "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
+            "/usr/share/fonts/emoji/NotoColorEmoji.ttf",
+            "/System/Library/Fonts/Apple Color Emoji.ttc",
+            "C:\\Windows\\Fonts\\seguiemj.ttf",
+        ];
+        for path in &emoji_paths {
+            if std::path::Path::new(path).exists()
+                && let Ok(data) = std::fs::read(path)
+            {
+                font_system.db_mut().load_font_data(data);
+            }
+        }
+
         let swash_cache = SwashCache::new();
         let cache = Cache::new(device);
         let mut atlas = TextAtlas::new(device, queue, &cache, format);
