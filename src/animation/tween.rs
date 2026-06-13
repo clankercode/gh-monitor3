@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Easing {
     Linear,
@@ -77,6 +78,7 @@ impl Tween {
         self.elapsed >= self.duration
     }
 
+    #[allow(dead_code)]
     pub fn reset(&mut self) {
         self.elapsed = Duration::ZERO;
     }

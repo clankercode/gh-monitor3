@@ -21,6 +21,7 @@ impl NotificationManager {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }

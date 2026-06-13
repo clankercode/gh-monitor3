@@ -8,7 +8,9 @@ const MAX_EVENTS: usize = 500;
 
 #[derive(Debug, Clone)]
 pub enum AnimationEvent {
+    #[allow(dead_code)]
     NewEntry(usize),
+    #[allow(dead_code)]
     UpdatedEntry(usize),
 }
 

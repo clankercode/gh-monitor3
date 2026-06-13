@@ -11,6 +11,7 @@ use super::events::GitHubEvent;
 
 pub struct GithubClient {
     http: reqwest::Client,
+    #[allow(dead_code)]
     token: Option<String>,
     etag_cache: Arc<Mutex<HashMap<String, String>>>,
 }
@@ -66,6 +67,7 @@ impl GithubClient {
             })
     }
 
+    #[allow(dead_code)]
     pub fn has_token(&self) -> bool {
         self.token.is_some()
     }

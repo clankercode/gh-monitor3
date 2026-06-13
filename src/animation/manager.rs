@@ -5,9 +5,12 @@ use std::time::{Duration, Instant};
 pub type AnimationId = u64;
 
 pub struct ManagedAnimation {
+    #[allow(dead_code)]
     pub id: AnimationId,
     pub opacity_animator: OpacityAnimator,
+    #[allow(dead_code)]
     pub position_offset: Option<(f32, f32)>,
+    #[allow(dead_code)]
     pub created_at: Instant,
 }
 
@@ -60,6 +63,7 @@ impl AnimationManager {
         id
     }
 
+    #[allow(dead_code)]
     pub fn remove(&mut self, id: AnimationId) {
         self.animations.remove(&id);
     }
@@ -77,6 +81,7 @@ impl AnimationManager {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_opacity(&self, id: AnimationId) -> Option<f32> {
         self.animations
             .get(&id)

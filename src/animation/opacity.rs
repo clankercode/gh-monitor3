@@ -4,6 +4,7 @@ use std::time::Duration;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum OpacityPhase {
     FadeIn,
+    #[allow(dead_code)]
     FadeOut,
     Pulse,
     Idle,
@@ -38,6 +39,7 @@ impl OpacityAnimator {
         ));
     }
 
+    #[allow(dead_code)]
     pub fn fade_out(&mut self, duration: Duration, target: f32) {
         self.phase = OpacityPhase::FadeOut;
         self.target_opacity = target;
@@ -98,6 +100,7 @@ impl OpacityAnimator {
         self.tween.is_some()
     }
 
+    #[allow(dead_code)]
     pub fn opacity(&self) -> f32 {
         self.current_opacity
     }

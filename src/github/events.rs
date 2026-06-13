@@ -106,6 +106,7 @@ pub enum EventPayloadType {
 }
 
 impl GitHubEvent {
+    #[allow(dead_code)]
     pub fn event_type_icon(&self) -> &'static str {
         match &self.event_type {
             EventType::Push => "\u{1f4e6}",

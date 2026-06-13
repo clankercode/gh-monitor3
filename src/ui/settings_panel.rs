@@ -29,14 +29,17 @@ pub enum SettingsFieldType {
 struct SettingsField {
     label: String,
     value: String,
+    #[allow(dead_code)]
     editable: bool,
     field_type: SettingsFieldType,
 }
 
 pub struct SettingsPanel {
     visible: bool,
+    #[allow(dead_code)]
     scroll_offset: f32,
     fields: Vec<SettingsField>,
+    #[allow(dead_code)]
     selected_field: Option<usize>,
     whoami_name: Option<String>,
 }

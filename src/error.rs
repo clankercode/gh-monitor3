@@ -11,9 +11,11 @@ pub enum AppError {
     #[error("Configuration error: {0}")]
     Config(String),
 
+    #[allow(dead_code)]
     #[error("Window error: {0}")]
     Window(String),
 
+    #[allow(dead_code)]
     #[error("Render error: {0}")]
     Render(String),
 

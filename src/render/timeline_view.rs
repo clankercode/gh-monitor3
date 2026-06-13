@@ -255,6 +255,7 @@ impl TimelineView {
         self.text_renderer.render(render_pass);
     }
 
+    #[allow(dead_code)]
     pub fn scroll(&mut self, delta: f32) {
         self.scroll_offset += delta;
         if self.scroll_offset > 0.0 {

@@ -136,9 +136,38 @@ impl Config {
             }
         };
 
-        let contents = toml::to_string_pretty(self)
+        let mut save_config = self.clone();
+        if save_config.github_token.is_some() {
+            save_config.github_token = None;
+        }
+
+        let contents = toml::to_string_pretty(&save_config)
             .map_err(|e| crate::error::AppError::Config(e.to_string()))?;
         std::fs::write(&config_path, contents)?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn save_token(&self, path: Option<&str>) -> crate::error::Result<()> {
+        if let Some(ref token) = self.github_token {
+            let token_path = match path {
+                Some(p) => std::path::PathBuf::from(p).with_extension("token"),
+                None => {
+                    let mut path = dirs::config_dir()
+                        .unwrap_or_else(|| std::path::PathBuf::from("."))
+                        .join("gh-monitor3");
+                    std::fs::create_dir_all(&path)?;
+                    path.push(".token");
+                    path
+                }
+            };
+            std::fs::write(&token_path, token)?;
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(&token_path, std::fs::Permissions::from_mode(0o600));
+            }
+        }
         Ok(())
     }
 }
@@ -291,7 +320,7 @@ other = [0.5, 0.5, 0.5, 1.0]
         config.save(Some(path.to_str().unwrap())).unwrap();
         let loaded = Config::load(Some(path.to_str().unwrap())).unwrap();
 
-        assert_eq!(loaded.github_token, Some("roundtrip-token".to_string()));
+        assert!(loaded.github_token.is_none());
         assert_eq!(loaded.poll_interval_secs, 120);
         assert_eq!(loaded.repos.len(), 2);
         assert_eq!(loaded.repos[0].owner, "octocat");

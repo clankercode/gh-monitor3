@@ -119,6 +119,7 @@ impl ShapeRenderer {
         self.indices.clear();
     }
 
+    #[allow(dead_code)]
     pub fn push_rect(
         &mut self,
         x: f32,

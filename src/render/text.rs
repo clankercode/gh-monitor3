@@ -15,6 +15,7 @@ pub struct TextSegment {
 pub struct TextRenderer {
     font_system: FontSystem,
     swash_cache: SwashCache,
+    #[allow(dead_code)]
     cache: Cache,
     atlas: TextAtlas,
     text_renderer: GlyphonRenderer,
@@ -138,6 +139,7 @@ impl TextRenderer {
             .expect("failed to render text");
     }
 
+    #[allow(dead_code)]
     pub fn trim(&mut self) {
         self.atlas.trim();
     }

@@ -39,6 +39,7 @@ pub struct App {
     window_pos: Option<(i32, i32)>,
     last_frame_time: Instant,
     window: Option<Arc<Window>>,
+    #[allow(dead_code)]
     tokio_rt: tokio::runtime::Runtime,
     theme: Theme,
     demo: DemoMode,
@@ -238,6 +239,7 @@ impl App {
         self.animation_manager.set_global_opacity(target);
     }
 
+    #[allow(dead_code)]
     pub fn start_demo(&mut self) {
         self.demo.start();
     }
@@ -410,7 +412,10 @@ impl ApplicationHandler for App {
                     && let (Some(pipeline), Some(view)) =
                         (&mut self.render_pipeline, &mut self.timeline_view)
                 {
-                    let size = self.window.as_ref().map(|w| w.inner_size()).unwrap();
+                    let size = match self.window.as_ref().map(|w| w.inner_size()) {
+                        Some(s) => s,
+                        None => return,
+                    };
                     view.prepare_render(
                         &pipeline.device,
                         &pipeline.queue,

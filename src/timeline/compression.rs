@@ -13,6 +13,7 @@ pub struct CompressedEntry {
     pub repo_name: String,
     pub items: Vec<(EventType, u32, String)>,
     pub time_range_str: String,
+    #[allow(dead_code)]
     pub count: u32,
 }
 

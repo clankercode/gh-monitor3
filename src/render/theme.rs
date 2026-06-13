@@ -13,6 +13,7 @@ pub struct Theme {
     pub badge_other: [f32; 4],
     pub font_size: f32,
     pub padding: f32,
+    #[allow(dead_code)]
     pub corner_radius: f32,
     pub line_height: f32,
 }
@@ -70,12 +71,4 @@ impl Theme {
         }
     }
 
-    pub fn color_to_wgpu(color: [f32; 4]) -> wgpu::Color {
-        wgpu::Color {
-            r: color[0] as f64,
-            g: color[1] as f64,
-            b: color[2] as f64,
-            a: color[3] as f64,
-        }
-    }
 }
