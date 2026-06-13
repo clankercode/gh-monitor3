@@ -12,7 +12,7 @@ const LABEL_FONT_SIZE: f32 = 11.0;
 const BUTTON_WIDTH: f32 = 80.0;
 const REMOVE_BUTTON_WIDTH: f32 = 24.0;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum SettingsFieldType {
     Token,
     RepoOwner(usize),
@@ -455,5 +455,213 @@ impl SettingsPanel {
             color: btn_text,
             max_width: Some(BUTTON_WIDTH - 20.0),
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::{RepoConfig, WindowConfig, ThemeConfig};
+
+    fn test_config() -> Config {
+        Config {
+            github_token: Some("ghp_abcdefgh12345678".to_string()),
+            repos: vec![RepoConfig {
+                owner: "octocat".to_string(),
+                name: "hello-world".to_string(),
+            }],
+            orgs: vec!["myorg".to_string()],
+            poll_interval_secs: 120,
+            window: WindowConfig::default(),
+            theme: ThemeConfig::default(),
+        }
+    }
+
+    #[test]
+    fn new_creates_with_correct_fields() {
+        let config = test_config();
+        let panel = SettingsPanel::new(&config);
+        assert_eq!(panel.fields.len(), 5);
+        assert!(matches!(panel.fields[0].field_type, SettingsFieldType::Token));
+        assert!(matches!(panel.fields[1].field_type, SettingsFieldType::PollInterval));
+        assert!(matches!(panel.fields[2].field_type, SettingsFieldType::RepoOwner(0)));
+        assert!(matches!(panel.fields[3].field_type, SettingsFieldType::RepoName(0)));
+        assert!(matches!(panel.fields[4].field_type, SettingsFieldType::Org(0)));
+    }
+
+    #[test]
+    fn toggle_changes_visibility() {
+        let config = test_config();
+        let mut panel = SettingsPanel::new(&config);
+        assert!(!panel.is_visible());
+        panel.toggle();
+        assert!(panel.is_visible());
+        panel.toggle();
+        assert!(!panel.is_visible());
+    }
+
+    #[test]
+    fn is_visible_default_false() {
+        let config = test_config();
+        let panel = SettingsPanel::new(&config);
+        assert!(!panel.is_visible());
+    }
+
+    #[test]
+    fn set_whoami_updates_name() {
+        let config = test_config();
+        let mut panel = SettingsPanel::new(&config);
+        assert!(panel.whoami_name.is_none());
+        panel.set_whoami(Some("testuser".to_string()));
+        assert_eq!(panel.whoami_name.as_deref(), Some("testuser"));
+        panel.set_whoami(None);
+        assert!(panel.whoami_name.is_none());
+    }
+
+    #[test]
+    fn hit_test_none_when_not_visible() {
+        let config = test_config();
+        let panel = SettingsPanel::new(&config);
+        assert!(panel.hit_test(400.0, 100.0, 800.0).is_none());
+    }
+
+    #[test]
+    fn hit_test_none_outside_panel() {
+        let config = test_config();
+        let mut panel = SettingsPanel::new(&config);
+        panel.toggle();
+        assert!(panel.hit_test(0.0, 0.0, 800.0).is_none());
+        assert!(panel.hit_test(799.0, 799.0, 800.0).is_none());
+    }
+
+    #[test]
+    fn hit_test_add_repo_button() {
+        let config = Config {
+            github_token: None,
+            repos: vec![],
+            orgs: vec![],
+            poll_interval_secs: 60,
+            window: WindowConfig::default(),
+            theme: ThemeConfig::default(),
+        };
+        let mut panel = SettingsPanel::new(&config);
+        panel.toggle();
+        let screen_w = 800.0;
+        let px = (screen_w - PANEL_WIDTH) / 2.0;
+        let py = 40.0;
+        let cy = py + PANEL_PADDING
+            + 2.0 * (FIELD_HEIGHT + FIELD_GAP)
+            + FIELD_GAP
+            + FIELD_GAP;
+        let btn_center_x = px + PANEL_PADDING + BUTTON_WIDTH / 2.0;
+        let btn_center_y = cy + FIELD_HEIGHT / 2.0;
+        assert_eq!(
+            panel.hit_test(btn_center_x, btn_center_y, screen_w),
+            Some(SettingsFieldType::AddRepoButton)
+        );
+    }
+
+    #[test]
+    fn hit_test_add_org_button() {
+        let config = Config {
+            github_token: None,
+            repos: vec![],
+            orgs: vec![],
+            poll_interval_secs: 60,
+            window: WindowConfig::default(),
+            theme: ThemeConfig::default(),
+        };
+        let mut panel = SettingsPanel::new(&config);
+        panel.toggle();
+        let screen_w = 800.0;
+        let px = (screen_w - PANEL_WIDTH) / 2.0;
+        let py = 40.0;
+        let cy = py + PANEL_PADDING
+            + 2.0 * (FIELD_HEIGHT + FIELD_GAP)
+            + FIELD_GAP
+            + FIELD_GAP
+            + (FIELD_HEIGHT + FIELD_GAP);
+        let btn_center_x = px + PANEL_PADDING + BUTTON_WIDTH / 2.0;
+        let btn_center_y = cy + FIELD_HEIGHT / 2.0;
+        assert_eq!(
+            panel.hit_test(btn_center_x, btn_center_y, screen_w),
+            Some(SettingsFieldType::AddOrgButton)
+        );
+    }
+
+    #[test]
+    fn hit_test_close_button() {
+        let config = Config {
+            github_token: None,
+            repos: vec![],
+            orgs: vec![],
+            poll_interval_secs: 60,
+            window: WindowConfig::default(),
+            theme: ThemeConfig::default(),
+        };
+        let mut panel = SettingsPanel::new(&config);
+        panel.toggle();
+        let screen_w = 800.0;
+        let px = (screen_w - PANEL_WIDTH) / 2.0;
+        let py = 40.0;
+        let cy = py + PANEL_PADDING
+            + 2.0 * (FIELD_HEIGHT + FIELD_GAP)
+            + FIELD_GAP
+            + FIELD_GAP
+            + 2.0 * (FIELD_HEIGHT + FIELD_GAP);
+        let btn_center_x = px + PANEL_PADDING + BUTTON_WIDTH / 2.0;
+        let btn_center_y = cy + FIELD_HEIGHT / 2.0;
+        assert_eq!(
+            panel.hit_test(btn_center_x, btn_center_y, screen_w),
+            Some(SettingsFieldType::CloseButton)
+        );
+    }
+
+    #[test]
+    fn hit_test_remove_repo_button() {
+        let config = test_config();
+        let mut panel = SettingsPanel::new(&config);
+        panel.toggle();
+        let screen_w = 800.0;
+        let px = (screen_w - PANEL_WIDTH) / 2.0;
+        let py = 40.0;
+        let field_y = py + PANEL_PADDING + 2.0 * (FIELD_HEIGHT + FIELD_GAP);
+        let remove_x = px + PANEL_WIDTH - PANEL_PADDING - REMOVE_BUTTON_WIDTH / 2.0;
+        let remove_y = field_y + FIELD_HEIGHT / 2.0;
+        assert_eq!(
+            panel.hit_test(remove_x, remove_y, screen_w),
+            Some(SettingsFieldType::RemoveRepoButton(0))
+        );
+    }
+
+    #[test]
+    fn hit_test_remove_org_button() {
+        let config = test_config();
+        let mut panel = SettingsPanel::new(&config);
+        panel.toggle();
+        let screen_w = 800.0;
+        let px = (screen_w - PANEL_WIDTH) / 2.0;
+        let py = 40.0;
+        let field_y = py + PANEL_PADDING + 4.0 * (FIELD_HEIGHT + FIELD_GAP);
+        let remove_x = px + PANEL_WIDTH - PANEL_PADDING - REMOVE_BUTTON_WIDTH / 2.0;
+        let remove_y = field_y + FIELD_HEIGHT / 2.0;
+        assert_eq!(
+            panel.hit_test(remove_x, remove_y, screen_w),
+            Some(SettingsFieldType::RemoveOrgButton(0))
+        );
+    }
+
+    #[test]
+    fn new_with_empty_config() {
+        let config = Config {
+            github_token: None,
+            repos: vec![],
+            orgs: vec![],
+            poll_interval_secs: 60,
+            window: WindowConfig::default(),
+            theme: ThemeConfig::default(),
+        };
+        let panel = SettingsPanel::new(&config);
+        assert_eq!(panel.fields.len(), 2);
     }
 }

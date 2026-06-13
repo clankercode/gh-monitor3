@@ -264,11 +264,83 @@ impl TimelineView {
     }
 
     pub fn hit_test(&self, x: f32, y: f32) -> Option<String> {
-        for item in &self.rendered_items {
-            if x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + CARD_HEIGHT {
-                return Some(item.url.clone());
-            }
+        hit_test_items(&self.rendered_items, x, y)
+    }
+}
+
+fn hit_test_items(items: &[RenderItem], x: f32, y: f32) -> Option<String> {
+    for item in items {
+        if x >= item.x && x <= item.x + item.width && y >= item.y && y <= item.y + CARD_HEIGHT {
+            return Some(item.url.clone());
         }
-        None
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_item(x: f32, y: f32, width: f32, url: &str) -> RenderItem {
+        RenderItem {
+            x,
+            y,
+            width,
+            repo_name: "test/repo".to_string(),
+            badges: vec![],
+            time_text: "1m".to_string(),
+            url: url.to_string(),
+        }
+    }
+
+    #[test]
+    fn hit_test_none_when_no_items() {
+        let items: Vec<RenderItem> = vec![];
+        assert!(hit_test_items(&items, 100.0, 100.0).is_none());
+    }
+
+    #[test]
+    fn hit_test_none_out_of_bounds() {
+        let items = vec![make_item(50.0, 50.0, 200.0, "https://github.com/test/repo")];
+        assert!(hit_test_items(&items, 0.0, 0.0).is_none());
+        assert!(hit_test_items(&items, 500.0, 500.0).is_none());
+        assert!(hit_test_items(&items, 30.0, 80.0).is_none());
+    }
+
+    #[test]
+    fn hit_test_some_inside_item() {
+        let items = vec![make_item(50.0, 50.0, 200.0, "https://github.com/test/repo")];
+        let result = hit_test_items(&items, 100.0, 80.0);
+        assert_eq!(result.as_deref(), Some("https://github.com/test/repo"));
+    }
+
+    #[test]
+    fn hit_test_returns_first_match() {
+        let items = vec![
+            make_item(10.0, 10.0, 100.0, "https://first"),
+            make_item(10.0, 10.0, 100.0, "https://second"),
+        ];
+        let result = hit_test_items(&items, 50.0, 50.0);
+        assert_eq!(result.as_deref(), Some("https://first"));
+    }
+
+    #[test]
+    fn hit_test_boundary_inclusive() {
+        let items = vec![make_item(100.0, 100.0, 200.0, "https://github.com/test")];
+        assert!(hit_test_items(&items, 100.0, 100.0).is_some());
+        assert!(hit_test_items(&items, 300.0, 100.0 + CARD_HEIGHT).is_some());
+    }
+
+    #[test]
+    fn hit_test_boundary_exclusive() {
+        let items = vec![make_item(100.0, 100.0, 200.0, "https://github.com/test")];
+        assert!(hit_test_items(&items, 99.9, 150.0).is_none());
+        assert!(hit_test_items(&items, 300.1, 150.0).is_none());
+    }
+
+    #[test]
+    fn hit_test_below_item() {
+        let items = vec![make_item(50.0, 50.0, 200.0, "https://github.com/test")];
+        assert!(hit_test_items(&items, 100.0, 50.0 + CARD_HEIGHT + 1.0).is_none());
     }
 }

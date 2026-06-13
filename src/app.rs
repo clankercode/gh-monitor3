@@ -6,7 +6,7 @@ use tracing::{debug, info};
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalPosition;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::window::{Window, WindowAttributes, WindowId};
 
 use crate::animation::manager::AnimationManager;
@@ -458,12 +458,6 @@ impl ApplicationHandler for App {
             if let Some(ref window) = self.window {
                 window.request_redraw();
             }
-        }
-
-        if !self.needs_redraw && !self.animation_manager.has_active_animations() {
-            _event_loop.set_control_flow(ControlFlow::Wait);
-        } else {
-            _event_loop.set_control_flow(ControlFlow::Poll);
         }
     }
 }

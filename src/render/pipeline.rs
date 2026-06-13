@@ -129,9 +129,9 @@ impl RenderPipeline {
         };
 
         let clear_color = wgpu::Color {
-            r: 0.0,
-            g: 0.0,
-            b: 0.0,
+            r: 0.05,
+            g: 0.05,
+            b: 0.08,
             a: opacity as f64,
         };
 

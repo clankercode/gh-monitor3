@@ -8,7 +8,7 @@ const MENU_PADDING: f32 = 4.0;
 const MENU_ITEM_PADDING_H: f32 = 12.0;
 const MENU_FONT_SIZE: f32 = 13.0;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum ContextAction {
     OpenSettings,
     ToggleDemo,
@@ -214,5 +214,114 @@ impl ContextMenu {
                 max_width: Some(iw - MENU_ITEM_PADDING_H * 2.0),
             });
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_creates_with_five_items() {
+        let menu = ContextMenu::new();
+        assert_eq!(menu.items.len(), 5);
+    }
+
+    #[test]
+    fn new_with_notifications_disabled() {
+        let menu = ContextMenu::new();
+        let notif_item = menu
+            .items
+            .iter()
+            .find(|i| matches!(i.action, ContextAction::ToggleNotifications))
+            .unwrap();
+        assert_eq!(notif_item.label, "Enable Notifications");
+    }
+
+    #[test]
+    fn new_with_notifications_enabled() {
+        let menu = ContextMenu::with_notifications_enabled(true);
+        let notif_item = menu
+            .items
+            .iter()
+            .find(|i| matches!(i.action, ContextAction::ToggleNotifications))
+            .unwrap();
+        assert_eq!(notif_item.label, "Disable Notifications");
+    }
+
+    #[test]
+    fn show_sets_visible() {
+        let mut menu = ContextMenu::new();
+        assert!(!menu.is_visible());
+        menu.show(100.0, 200.0);
+        assert!(menu.is_visible());
+    }
+
+    #[test]
+    fn hide_sets_not_visible() {
+        let mut menu = ContextMenu::new();
+        menu.show(100.0, 200.0);
+        assert!(menu.is_visible());
+        menu.hide();
+        assert!(!menu.is_visible());
+    }
+
+    #[test]
+    fn is_visible_default_false() {
+        let menu = ContextMenu::new();
+        assert!(!menu.is_visible());
+    }
+
+    #[test]
+    fn hit_test_none_when_not_visible() {
+        let menu = ContextMenu::new();
+        assert!(menu.hit_test(10.0, 10.0).is_none());
+    }
+
+    #[test]
+    fn hit_test_none_outside_menu() {
+        let mut menu = ContextMenu::new();
+        menu.show(100.0, 100.0);
+        assert!(menu.hit_test(0.0, 0.0).is_none());
+        assert!(menu.hit_test(300.0, 300.0).is_none());
+        assert!(menu.hit_test(50.0, 50.0).is_none());
+    }
+
+    #[test]
+    fn hit_test_some_inside_first_item() {
+        let mut menu = ContextMenu::new();
+        menu.show(100.0, 100.0);
+        let layout = menu.layout();
+        let (ix, iy, iw, ih, _) = layout[0];
+        let result = menu.hit_test(ix + iw / 2.0, iy + ih / 2.0);
+        assert_eq!(result, Some(ContextAction::OpenSettings));
+    }
+
+    #[test]
+    fn hit_test_correct_action_for_each_item() {
+        let mut menu = ContextMenu::new();
+        menu.show(50.0, 50.0);
+        let expected = [
+            ContextAction::OpenSettings,
+            ContextAction::ToggleDemo,
+            ContextAction::ToggleNotifications,
+            ContextAction::RefreshNow,
+            ContextAction::Exit,
+        ];
+        let layout = menu.layout();
+        for (i, (ix, iy, iw, ih, _)) in layout.iter().enumerate() {
+            let result = menu.hit_test(ix + iw / 2.0, iy + ih / 2.0);
+            assert_eq!(result, Some(expected[i]), "item {}", i);
+        }
+    }
+
+    #[test]
+    fn hit_test_boundary_exclusive() {
+        let mut menu = ContextMenu::new();
+        menu.show(100.0, 100.0);
+        let layout = menu.layout();
+        let (ix, iy, iw, ih, _) = layout[0];
+        assert!(menu.hit_test(ix - 0.1, iy + ih / 2.0).is_none());
+        assert!(menu.hit_test(ix + iw + 0.1, iy + ih / 2.0).is_none());
     }
 }

@@ -69,8 +69,8 @@ impl Default for WindowConfig {
             y: None,
             width: 320,
             height: 480,
-            opacity: 0.15,
-            hover_opacity: 0.95,
+            opacity: 0.85,
+            hover_opacity: 0.98,
         }
     }
 }
