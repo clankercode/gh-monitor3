@@ -200,8 +200,8 @@ mod tests {
         assert!(w.y.is_none());
         assert_eq!(w.width, 320);
         assert_eq!(w.height, 480);
-        assert_eq!(w.opacity, 0.15);
-        assert_eq!(w.hover_opacity, 0.95);
+        assert_eq!(w.opacity, 0.85);
+        assert_eq!(w.hover_opacity, 0.98);
     }
 
     #[test]
